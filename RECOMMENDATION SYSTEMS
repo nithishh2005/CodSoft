@@ -1,0 +1,72 @@
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Define the college data
+colleges = [
+    (1, "GCT", 4.5, 3, True),
+    (2, "PSG TECH", 4.0, 2, False),
+    (3, "PSG ITECH", 4.2, 4, True),
+    (4, "KPR", 3.8, 2, True),
+    (5, "CIT", 4.7, 3, False),
+    (6, "KUMARAGURU", 4.1, 1, True),
+    (7, "SRI KRISHNA", 3.9, 2, False),
+    (8, "ESHWAR", 4.6, 4, True),
+    (9, "SRI RAMAKRISHNAA", 4.3, 3, True),
+    (10, "SNS", 4.2, 2, False)
+]
+
+college_profiles = {}
+for college_id, name, rating, fee_range, offers_courses in colleges:
+    college_profiles[college_id] = {
+        'name': name,
+        'rating': rating,
+        'fee_range': fee_range,
+        'offers_courses': offers_courses
+    }
+
+def rec_colleges(user_preferences, num_recommendations=3):
+    user_profile = np.array([
+        user_preferences['rating'],
+        user_preferences['fee_range'],
+        user_preferences['offers_courses']
+    ]).reshape(1, -1)
+    similarities = []
+    for college_id, profile in college_profiles.items():
+        college_profile = np.array([
+            profile['rating'],
+            profile['fee_range'],
+            int(profile['offers_courses'] == user_preferences['offers_courses'])
+        ]).reshape(1, -1)
+        similarity = cosine_similarity(user_profile, college_profile)[0, 0]
+        similarities.append((college_id, similarity))
+    similarities.sort(key=lambda x: x[1], reverse=True)
+
+    rec_colleges = []
+    for college_id, similarity in similarities[:num_recommendations]:
+        rec_colleges.append(college_profiles[college_id]['name'])
+
+    return rec_colleges
+
+def get_user_preferences():
+    print("Please enter your preferences:")
+    rating = float(input("Minimum rating desired (1.0 - 5.0): "))
+    fee_range = int(input("Preferred fee range (1: low, 2: medium, 3: high, 4: very high): "))
+    offers_courses = input("Do you prefer colleges that offer specific courses/facilities? (y/n): ").lower() == 'y'
+    return {
+        'rating': rating,
+        'fee_range': fee_range,
+        'offers_courses': offers_courses
+    }
+
+while True:
+    user_preferences = get_user_preferences()
+    recommended_colleges = rec_colleges(user_preferences)
+
+    print("\nRecommended colleges for you:")
+    for idx, college in enumerate(recommended_colleges, start=1):
+        print(f"{idx}. {college}")
+
+    choice = input("\nWould you like to get recommendations again? (yes/no): ").lower()
+    if choice != 'yes':
+        print("Thank you for using the college recommendation system!")
+        break
